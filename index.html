@@ -1005,10 +1005,29 @@
 
     <!-- Buttons -->
     <div style="display:flex; flex-direction:column; gap:14px; width:100%;">
-      <button onclick="showPinPrompt()" style="background: linear-gradient(135deg, rgb(224, 85, 0), rgb(184, 68, 0)); border: 1px solid rgba(224, 85, 0, 0.6); color: rgb(255, 255, 255); font-family: Airborne, &quot;Barlow Condensed&quot;, sans-serif; font-size: 1.15rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 18px 24px; border-radius: 10px; cursor: pointer; box-shadow: rgba(224, 85, 0, 0.25) 0px 4px 24px; transition: box-shadow 0.2s, transform 0.1s; width: 100%;" onmouseover="this.style.boxShadow=&#39;0 4px 32px rgba(224,85,0,0.5)&#39;" onmouseout="this.style.boxShadow=&#39;0 4px 24px rgba(224,85,0,0.25)&#39;" ontouchstart="this.style.transform=&#39;scale(0.98)&#39;" ontouchend="this.style.transform=&#39;scale(1)&#39;">
+      <button onclick="showPinPrompt()" style="
+        background: linear-gradient(135deg, #E05500, #b84400);
+        border: 1px solid rgba(224,85,0,0.6);
+        color:#fff;
+        font-family:&#39;Airborne&#39;,&#39;Barlow Condensed&#39;,sans-serif;
+        font-size:1.15rem; letter-spacing:0.15em; text-transform:uppercase;
+        padding:18px 24px; border-radius:10px; cursor:pointer;
+        box-shadow: 0 4px 24px rgba(224,85,0,0.25);
+        transition: box-shadow 0.2s, transform 0.1s;
+        width:100%;
+      " onmouseover="this.style.boxShadow=&#39;0 4px 32px rgba(224,85,0,0.5)&#39;" onmouseout="this.style.boxShadow=&#39;0 4px 24px rgba(224,85,0,0.25)&#39;" ontouchstart="this.style.transform=&#39;scale(0.98)&#39;" ontouchend="this.style.transform=&#39;scale(1)&#39;">
         ⚙ &nbsp; ADMIN ACCESS
       </button>
-      <button onclick="enterRole(&#39;instructor&#39;)" style="background: transparent; border: 1px solid rgba(224, 85, 0, 0.3); color: rgb(224, 85, 0); font-family: Airborne, &quot;Barlow Condensed&quot;, sans-serif; font-size: 1.15rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 18px 24px; border-radius: 10px; cursor: pointer; transition: background 0.2s, border-color 0.2s, transform 0.1s; width: 100%;" onmouseover="this.style.background=&#39;rgba(224,85,0,0.08)&#39;; this.style.borderColor=&#39;rgba(224,85,0,0.6)&#39;" onmouseout="this.style.background=&#39;transparent&#39;; this.style.borderColor=&#39;rgba(224,85,0,0.3)&#39;" ontouchstart="this.style.transform=&#39;scale(0.98)&#39;" ontouchend="this.style.transform=&#39;scale(1)&#39;">
+      <button onclick="enterRole(&#39;instructor&#39;)" style="
+        background: transparent;
+        border: 1px solid rgba(224,85,0,0.3);
+        color: #E05500;
+        font-family:&#39;Airborne&#39;,&#39;Barlow Condensed&#39;,sans-serif;
+        font-size:1.15rem; letter-spacing:0.15em; text-transform:uppercase;
+        padding:18px 24px; border-radius:10px; cursor:pointer;
+        transition: background 0.2s, border-color 0.2s, transform 0.1s;
+        width:100%;
+      " onmouseover="this.style.background=&#39;rgba(224,85,0,0.08)&#39;; this.style.borderColor=&#39;rgba(224,85,0,0.6)&#39;" onmouseout="this.style.background=&#39;transparent&#39;; this.style.borderColor=&#39;rgba(224,85,0,0.3)&#39;" ontouchstart="this.style.transform=&#39;scale(0.98)&#39;" ontouchend="this.style.transform=&#39;scale(1)&#39;">
         🎽 &nbsp; INSTRUCTOR
       </button>
     </div>
@@ -2478,10 +2497,17 @@ function checkPin() {
 function enterRole(role) {
   document.getElementById('role-screen').style.display = 'none';
   if (role === 'instructor') {
+    // Hide everything except the instructor screen
+    document.querySelector('header').style.display = 'none';
+    document.querySelector('.tabs').style.display = 'none';
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.getElementById('error-banner').style.display = 'none';
     document.getElementById('instructor-screen').style.display = 'block';
     initInstructorDatePicker();
     loadInstructorChips();
   } else {
+    document.getElementById('instructor-screen').style.display = 'none';
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = '');
     document.getElementById('error-banner').style.display = 'none';
     document.querySelector('header').style.display = '';
     document.querySelector('.tabs').style.display = '';
@@ -2521,11 +2547,11 @@ async function loadInstructorChips() {
   const wrap = document.getElementById('ins-chips');
   wrap.innerHTML = '<span style="color:#64748b;font-size:0.8rem;">Loading members…</span>';
   try {
-    const res  = await fetch(ATTENDANCE_SCRIPT_URL, { redirect:'follow', cache:'no-store' });
+    const res  = await fetch(APPS_SCRIPT_URL, { redirect:'follow', cache:'no-store' });
     const json = await res.json();
     wrap.innerHTML = '';
 
-    // Coaches first
+    // Coaches first — blue chips
     COACHES.forEach(name => {
       const chip = document.createElement('span');
       chip.className = 'member-chip coach-chip';
@@ -2537,20 +2563,21 @@ async function loadInstructorChips() {
     div.style.cssText = 'width:100%;border-top:1px solid #2d3348;margin:6px 0 2px;';
     wrap.appendChild(div);
 
-    // Members from rankings data (guaranteed no duplicates, title-cased, coaches excluded)
+    // Members from subscription list (guaranteed no duplicates, title-cased, coaches excluded)
     const seen = new Set();
     json
-      .map(m => ({ ...m, display: toTitleCase(m.name) }))
-      .filter(m => !COACHES.some(c => c.toLowerCase() === m.display.toLowerCase()))
-      .sort((a,b) => a.display.localeCompare(b.display))
-      .forEach(m => {
-        const key = m.display.toLowerCase();
+      .map(r => toTitleCase(((r['First Name'] || '') + ' ' + (r['Last Name'] || '')).trim()))
+      .filter(Boolean)
+      .filter(name => !COACHES.some(c => c.toLowerCase() === name.toLowerCase()))
+      .sort((a, b) => a.localeCompare(b))
+      .forEach(name => {
+        const key = name.toLowerCase();
         if (seen.has(key)) return;
         seen.add(key);
         const chip = document.createElement('span');
         chip.className = 'member-chip';
-        chip.textContent = m.display;
-        chip.onclick = () => toggleInstructorChip(chip, m.display);
+        chip.textContent = name;
+        chip.onclick = () => toggleInstructorChip(chip, name);
         wrap.appendChild(chip);
       });
   } catch(e) {
